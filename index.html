@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- SEO: Basic Meta Tags -->
+    <meta charset="UTF-8">
+    <title>Spectro Bloom: Interactive Generative Art</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create and explore mesmerizing, ever-evolving floral nebulas with Spectro Bloom. An interactive WebGL experience  that lets you control the cosmos.">
+    <meta name="keywords" content="generative art, webgl, interactive art, shader, creative coding, digital art, abstract art, visualization, real-time graphics">
+    <meta name="author" content="Chris Pirillo">
+    <link rel="canonical" href="https://pirillo.com/arcade/spectro-bloom.html">
+
+    <!-- SEO: Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pirillo.com/arcade/spectro-bloom.html">
+    <meta property="og:title" content="Spectro Bloom: Interactive Generative Art">
+    <meta property="og:description" content="An interactive WebGL experience that lets you create and explore mesmerizing, ever-evolving floral nebulas.">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/spectro-bloom.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- SEO: Twitter Card -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://pirillo.com/arcade/spectro-bloom.html">
+    <meta property="twitter:title" content="Spectro Bloom: Interactive Generative Art">
+    <meta property="twitter:description" content="Create and explore mesmerizing, ever-evolving floral nebulas with this interactive WebGL experience.">
+    <meta property="twitter:image" content="https://pirillo.com/arcade/images/spectro-bloom.png">
+    <meta property="twitter:creator" content="@ChrisPirillo">
+
+    <!-- Performance: Resource Hints -->
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+
+    <!-- Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+
+    <!-- SEO: JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Spectro Bloom",
+      "description": "An interactive WebGL-based generative art application that allows users to create and manipulate mesmerizing visual patterns called Spectro Blooms.",
+      "url": "https://pirillo.com/arcade/spectro-bloom.html",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://chris.pirillo.com/"
+      },
+      "image": "https://pirillo.com/arcade/images/spectro-bloom.png",
+      "keywords": "generative art, webgl, interactive art, shader, creative coding, digital art, Chris Pirillo"
+    }
+    </script>
+
+    <style>
+        /* CSS has been left untouched to preserve the original design */
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Hamburger Menu */
+        .menu-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .hamburger {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .hamburger:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .hamburger span {
+            width: 20px;
+            height: 2px;
+            background: white;
+            margin: 2px 0;
+            transition: 0.3s;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .menu-panel {
+            box-sizing: border-box; /* FIX: Include padding in height calculation */
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            width: 320px;
+            max-height: calc(100vh - 90px);
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            transform: translateX(-120%);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-panel.open {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group h3 {
+            color: #fff;
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        .slider-value {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #fff;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00ff88;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            transition: transform 0.2s ease;
+        }
+         input[type="range"]:active::-webkit-slider-thumb {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00ff88;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .button-group button {
+            flex-grow: 1;
+            padding: 10px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .randomize-btn {
+            background: linear-gradient(45deg, #4a90e2, #82c2ff);
+        }
+        .randomize-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .export-btn {
+            background: linear-gradient(45deg, #50c9c3, #96deda);
+        }
+        .export-btn:hover {
+             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(80, 201, 195, 0.4);
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Scrollbar styling */
+        .menu-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .menu-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .menu-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .menu-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <!-- The header contains the primary navigation controls for the application -->
+        <h1 style="display: none;">Spectro Bloom - Interactive Art Controls</h1>
+        <nav class="menu-container">
+            <button class="hamburger" id="hamburger" aria-label="Toggle controls menu" aria-expanded="false" aria-controls="menuPanel">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            
+            <div class="menu-panel" id="menuPanel" role="dialog" aria-labelledby="controls-heading">
+                <div class="control-group">
+                    <h3 id="controls-heading">Animation</h3>
+                    <div class="slider-container">
+                        <label for="timeSpeed" class="slider-label">
+                            <span>Time Speed</span>
+                            <span class="slider-value" id="timeSpeedValue">1.0</span>
+                        </label>
+                        <input type="range" id="timeSpeed" min="0" max="3" step="0.1" value="1.0">
+                    </div>
+                    <div class="slider-container">
+                        <label for="rotSpeed" class="slider-label">
+                            <span>Rotation Speed</span>
+                            <span class="slider-value" id="rotSpeedValue">0.3</span>
+                        </label>
+                        <input type="range" id="rotSpeed" min="0" max="1" step="0.05" value="0.3">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Geometry</h3>
+                    <div class="slider-container">
+                        <label for="iterations" class="slider-label">
+                            <span>Iterations</span>
+                            <span class="slider-value" id="iterationsValue">100</span>
+                        </label>
+                        <input type="range" id="iterations" min="20" max="200" step="5" value="100">
+                    </div>
+                    <div class="slider-container">
+                        <label for="zOffset" class="slider-label">
+                            <span>Z Offset</span>
+                            <span class="slider-value" id="zOffsetValue">9.0</span>
+                        </label>
+                        <input type="range" id="zOffset" min="5" max="20" step="0.5" value="9.0">
+                    </div>
+                    <div class="slider-container">
+                        <label for="stepSize" class="slider-label">
+                            <span>Step Size</span>
+                            <span class="slider-value" id="stepSizeValue">0.01</span>
+                        </label>
+                        <input type="range" id="stepSize" min="0.005" max="0.05" step="0.001" value="0.01">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Distortion</h3>
+                    <div class="slider-container">
+                        <label for="logScale" class="slider-label">
+                            <span>Log Scale</span>
+                            <span class="slider-value" id="logScaleValue">5.0</span>
+                        </label>
+                        <input type="range" id="logScale" min="1" max="10" step="0.1" value="5.0">
+                    </div>
+                    <div class="slider-container">
+                        <label for="distortion" class="slider-label">
+                            <span>Distortion Amount</span>
+                            <span class="slider-value" id="distortionValue">0.1</span>
+                        </label>
+                        <input type="range" id="distortion" min="0.01" max="0.5" step="0.01" value="0.1">
+                    </div>
+                    <div class="slider-container">
+                        <label for="sinAmp" class="slider-label">
+                            <span>Sin Amplitude</span>
+                            <span class="slider-value" id="sinAmpValue">0.2</span>
+                        </label>
+                        <input type="range" id="sinAmp" min="0.05" max="1" step="0.05" value="0.2">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Appearance</h3>
+                    <div class="slider-container">
+                        <label for="waveFreq" class="slider-label">
+                            <span>Wave Frequency</span>
+                            <span class="slider-value" id="waveFreqValue">0.1</span>
+                        </label>
+                        <input type="range" id="waveFreq" min="0.01" max="0.5" step="0.01" value="0.1">
+                    </div>
+                    <div class="slider-container">
+                        <label for="colorIntensity" class="slider-label">
+                            <span>Color Intensity</span>
+                            <span class="slider-value" id="colorIntensityValue">5e4</span>
+                        </label>
+                        <input type="range" id="colorIntensity" min="10000" max="100000" step="5000" value="50000">
+                    </div>
+                    <div class="slider-container">
+                        <label for="phaseOffset" class="slider-label">
+                            <span>Phase Offset</span>
+                            <span class="slider-value" id="phaseOffsetValue">0.2</span>
+                        </label>
+                        <input type="range" id="phaseOffset" min="0.1" max="1" step="0.1" value="0.2">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Camera &amp; Color</h3>
+                    <div class="slider-container">
+                        <label for="fov" class="slider-label">
+                            <span>Field of View</span>
+                            <span class="slider-value" id="fovValue">800</span>
+                        </label>
+                        <input type="range" id="fov" min="100" max="2000" step="10" value="800">
+                    </div>
+                     <div class="slider-container">
+                        <label for="brightness" class="slider-label">
+                            <span>Brightness</span>
+                            <span class="slider-value" id="brightnessValue">2.0</span>
+                        </label>
+                        <input type="range" id="brightness" min="0.5" max="5" step="0.1" value="2.0">
+                    </div>
+                    <div class="slider-container">
+                        <label for="colorVecR" class="slider-label">
+                            <span>Color Vector R</span>
+                            <span class="slider-value" id="colorVecRValue">0.0</span>
+                        </label>
+                        <input type="range" id="colorVecR" min="0" max="10" step="0.1" value="0.0">
+                    </div>
+                    <div class="slider-container">
+                        <label for="colorVecG" class="slider-label">
+                            <span>Color Vector G</span>
+                            <span class="slider-value" id="colorVecGValue">2.0</span>
+                        </label>
+                        <input type="range" id="colorVecG" min="0" max="10" step="0.1" value="2.0">
+                    </div>
+                    <div class="slider-container">
+                        <label for="colorVecB" class="slider-label">
+                            <span>Color Vector B</span>
+                            <span class="slider-value" id="colorVecBValue">4.0</span>
+                        </label>
+                        <input type="range" id="colorVecB" min="0" max="10" step="0.1" value="4.0">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="randomize-btn" id="randomizeBtn">Randomize</button>
+                    <button class="export-btn" id="exportBtn">Export</button>
+                    <button class="reset-btn" id="resetBtn">Reset</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Core Web Vitals: Set explicit width/height to prevent CLS -->
+        <canvas id="canvas" width="1920" height="1080" aria-label="Interactive WebGL visualization of a Spectro Bloom"></canvas>
+    </main>
+    
+    <!-- The JavaScript has been left untouched to preserve functionality -->
+    <script>
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext('webgl');
+        
+        if (!gl) {
+            // Use a non-blocking notification instead of alert()
+            const msg = document.createElement('div');
+            msg.textContent = 'WebGL not supported. Please use a modern browser.';
+            msg.style.position = 'fixed';
+            msg.style.top = '10px';
+            msg.style.left = '10px';
+            msg.style.background = 'red';
+            msg.style.color = 'white';
+            msg.style.padding = '10px';
+            msg.style.borderRadius = '5px';
+            msg.style.zIndex = '2000';
+            document.body.appendChild(msg);
+        }
+
+        let currentTime = 0;
+
+        // Shader parameters with default values
+        const params = {
+            timeSpeed: 1.0,
+            rotSpeed: 0.3,
+            iterations: 100,
+            zOffset: 9.0,
+            stepSize: 0.01,
+            logScale: 5.0,
+            distortion: 0.1,
+            sinAmp: 0.2,
+            waveFreq: 0.1,
+            colorIntensity: 50000,
+            phaseOffset: 0.2,
+            fov: 800.0,
+            brightness: 2.0,
+            colorVecR: 0.0,
+            colorVecG: 2.0,
+            colorVecB: 4.0
+        };
+
+        const vertexShaderSource = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision highp float;
+            uniform float u_time;
+            uniform vec2 u_resolution;
+            // Standard uniforms
+            uniform float u_timeSpeed;
+            uniform float u_rotSpeed;
+            uniform float u_iterations;
+            uniform float u_zOffset;
+            uniform float u_stepSize;
+            uniform float u_logScale;
+            uniform float u_distortion;
+            uniform float u_sinAmp;
+            uniform float u_waveFreq;
+            uniform float u_colorIntensity;
+            uniform float u_phaseOffset;
+            // New uniforms
+            uniform float u_fov;
+            uniform float u_brightness;
+            uniform float u_colorVecR;
+            uniform float u_colorVecG;
+            uniform float u_colorVecB;
+
+
+            vec4 tanh_approx(vec4 x) {
+                return x / (1.0 + abs(x));
+            }
+
+            void main() {
+                vec2 FC = gl_FragCoord.xy;
+                vec2 r = u_resolution;
+                float t = u_time * u_timeSpeed;
+                vec4 o = vec4(0.0);
+                
+                float z = 0.0;
+                float s = 0.0;
+
+                for(float i = 0.0; i < 200.0; i += 1.0) {
+                    if(i >= u_iterations) break;
+                    
+                    float d = 0.0;
+                    
+                    vec3 p = z * normalize(vec3(FC.xy * 2.0 - r, u_fov));
+                    
+                    vec3 colorVec = vec3(u_colorVecR, u_colorVecG, u_colorVecB);
+                    vec3 a = normalize(cos(colorVec + t - s * u_rotSpeed));
+                    
+                    p.z += u_zOffset;
+                    
+                    a = a * dot(a, p) - cross(a, p);
+                    s = log(length(a)) * u_logScale;
+                    
+                    d = u_stepSize + u_distortion * abs(a.x + sin(s / u_phaseOffset - t / u_phaseOffset) * u_sinAmp);
+                    z += d;
+                    
+                    if (d > 0.0001) {
+                        o += (cos(u_waveFreq * i + vec4(0.0, 1.0, 2.0, 0.0)) + u_brightness) / d * z;
+                    }
+                }
+                
+                gl_FragColor = tanh_approx(o / u_colorIntensity);
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+                console.error('Shader source:', source);
+                gl.deleteShader(shader);
+                return null;
+            }
+            
+            return shader;
+        }
+
+        function createProgram(gl, vertexShader, fragmentShader) {
+            if (!vertexShader || !fragmentShader) {
+                console.error('Cannot create program: missing shaders');
+                return null;
+            }
+            
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program linking error:', gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+                return null;
+            }
+            
+            return program;
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const program = createProgram(gl, vertexShader, fragmentShader);
+
+        const uniformLocations = {
+            position: gl.getAttribLocation(program, 'a_position'),
+            time: gl.getUniformLocation(program, 'u_time'),
+            resolution: gl.getUniformLocation(program, 'u_resolution'),
+            timeSpeed: gl.getUniformLocation(program, 'u_timeSpeed'),
+            rotSpeed: gl.getUniformLocation(program, 'u_rotSpeed'),
+            iterations: gl.getUniformLocation(program, 'u_iterations'),
+            zOffset: gl.getUniformLocation(program, 'u_zOffset'),
+            stepSize: gl.getUniformLocation(program, 'u_stepSize'),
+            logScale: gl.getUniformLocation(program, 'u_logScale'),
+            distortion: gl.getUniformLocation(program, 'u_distortion'),
+            sinAmp: gl.getUniformLocation(program, 'u_sinAmp'),
+            waveFreq: gl.getUniformLocation(program, 'u_waveFreq'),
+            colorIntensity: gl.getUniformLocation(program, 'u_colorIntensity'),
+            phaseOffset: gl.getUniformLocation(program, 'u_phaseOffset'),
+            fov: gl.getUniformLocation(program, 'u_fov'),
+            brightness: gl.getUniformLocation(program, 'u_brightness'),
+            colorVecR: gl.getUniformLocation(program, 'u_colorVecR'),
+            colorVecG: gl.getUniformLocation(program, 'u_colorVecG'),
+            colorVecB: gl.getUniformLocation(program, 'u_colorVecB')
+        };
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const displayWidth  = Math.floor(canvas.clientWidth * dpr);
+            const displayHeight = Math.floor(canvas.clientHeight * dpr);
+
+            if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+                canvas.width = displayWidth;
+                canvas.height = displayHeight;
+                gl.viewport(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function render(time) {
+            currentTime = time; // Keep track of current time for export
+            resizeCanvas();
+            
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            gl.useProgram(program);
+            
+            gl.uniform1f(uniformLocations.time, currentTime * 0.001);
+            gl.uniform2f(uniformLocations.resolution, canvas.width, canvas.height);
+            for (const key in params) {
+                if (uniformLocations[key]) {
+                    gl.uniform1f(uniformLocations[key], params[key]);
+                }
+            }
+            
+            gl.enableVertexAttribArray(uniformLocations.position);
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(uniformLocations.position, 2, gl.FLOAT, false, 0, 0);
+            
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            
+            requestAnimationFrame(render);
+        }
+
+        // --- UI Functionality ---
+        const hamburger = document.getElementById('hamburger');
+        const menuPanel = document.getElementById('menuPanel');
+        let menuOpen = false;
+
+        hamburger.addEventListener('click', () => {
+            menuOpen = !menuOpen;
+            const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
+            hamburger.classList.toggle('active', menuOpen);
+            menuPanel.classList.toggle('open', menuOpen);
+            hamburger.setAttribute('aria-expanded', !isExpanded);
+        });
+
+        function setupSlider(id, paramName, formatter = (v) => v) {
+            const slider = document.getElementById(id);
+            const valueDisplay = document.getElementById(id + 'Value');
+            
+            slider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                params[paramName] = value;
+                if (valueDisplay) {
+                    valueDisplay.textContent = formatter(value);
+                }
+            });
+            if (valueDisplay) {
+                 valueDisplay.textContent = formatter(params[paramName]);
+            }
+        }
+
+        const sliders = document.querySelectorAll('input[type="range"]');
+        const formatters = {
+            timeSpeed: v => v.toFixed(1), rotSpeed: v => v.toFixed(2),
+            iterations: v => v.toString(), zOffset: v => v.toFixed(1),
+            stepSize: v => v.toFixed(3), logScale: v => v.toFixed(1),
+            distortion: v => v.toFixed(2), sinAmp: v => v.toFixed(2),
+            waveFreq: v => v.toFixed(2), colorIntensity: v => v.toExponential(0),
+            phaseOffset: v => v.toFixed(1), fov: v => Math.round(v),
+            brightness: v => v.toFixed(1), colorVecR: v => v.toFixed(1),
+            colorVecG: v => v.toFixed(1), colorVecB: v => v.toFixed(1)
+        };
+        sliders.forEach(slider => {
+            setupSlider(slider.id, slider.id, formatters[slider.id]);
+        });
+
+
+        function getInitialParams() {
+             return {
+                timeSpeed: 1.0, rotSpeed: 0.3, iterations: 100,
+                zOffset: 9.0, stepSize: 0.01, logScale: 5.0,
+                distortion: 0.1, sinAmp: 0.2, waveFreq: 0.1,
+                colorIntensity: 50000, phaseOffset: 0.2,
+                fov: 800.0, brightness: 2.0, colorVecR: 0.0,
+                colorVecG: 2.0, colorVecB: 4.0
+            };
+        }
+
+        function resetDefaults() {
+            const defaultParams = getInitialParams();
+            Object.assign(params, defaultParams);
+            sliders.forEach(slider => {
+                slider.value = params[slider.id];
+                slider.dispatchEvent(new Event('input'));
+            });
+        }
+        document.getElementById('resetBtn').addEventListener('click', resetDefaults);
+
+        function randomizeAllSettings() {
+            sliders.forEach(slider => {
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                const step = parseFloat(slider.step);
+                let randomValue;
+
+                if (slider.id === 'timeSpeed') {
+                    // Ensure timeSpeed is never 0 to keep animation running
+                    randomValue = Math.random() * (max - 0.1) + 0.1;
+                } else {
+                    randomValue = Math.random() * (max - min) + min;
+                }
+                
+                if (step) {
+                    randomValue = Math.round(randomValue / step) * step;
+                }
+                randomValue = Math.max(min, Math.min(max, randomValue));
+
+                slider.value = randomValue;
+                slider.dispatchEvent(new Event('input'));
+            });
+        }
+        document.getElementById('randomizeBtn').addEventListener('click', randomizeAllSettings);
+
+        function exportAsPNG() {
+            const exportWidth = 3840;
+            const exportHeight = 2160;
+
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = exportWidth;
+            exportCanvas.height = exportHeight;
+            
+            // Use preserveDrawingBuffer to ensure we can capture the canvas content
+            const exportGL = exportCanvas.getContext('webgl', { preserveDrawingBuffer: true });
+            if (!exportGL) {
+                console.error("Could not create WebGL context for export.");
+                return;
+            }
+
+            // Recreate the shader program for the export canvas
+            const vs = createShader(exportGL, exportGL.VERTEX_SHADER, vertexShaderSource);
+            const fs = createShader(exportGL, exportGL.FRAGMENT_SHADER, fragmentShaderSource);
+            const exportProgram = createProgram(exportGL, vs, fs);
+
+            // Get uniform locations for the export program
+            const locations = {};
+            for (const key in uniformLocations) {
+                if (key === 'position') {
+                    locations.position = exportGL.getAttribLocation(exportProgram, 'a_position');
+                } else {
+                    locations[key] = exportGL.getUniformLocation(exportProgram, `u_${key}`);
+                }
+            }
+
+            // Create and bind buffer for the export canvas
+            const buffer = exportGL.createBuffer();
+            exportGL.bindBuffer(exportGL.ARRAY_BUFFER, buffer);
+            exportGL.bufferData(exportGL.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), exportGL.STATIC_DRAW);
+
+            // Setup and render one frame
+            exportGL.viewport(0, 0, exportWidth, exportHeight);
+            exportGL.clearColor(0, 0, 0, 1);
+            exportGL.clear(exportGL.COLOR_BUFFER_BIT);
+            exportGL.useProgram(exportProgram);
+
+            // Set all uniforms based on current state
+            exportGL.uniform1f(locations.time, currentTime * 0.001);
+            exportGL.uniform2f(locations.resolution, exportWidth, exportHeight);
+            for (const key in params) {
+                if (locations[key]) {
+                    exportGL.uniform1f(locations[key], params[key]);
+                }
+            }
+
+            exportGL.enableVertexAttribArray(locations.position);
+            exportGL.bindBuffer(exportGL.ARRAY_BUFFER, buffer);
+            exportGL.vertexAttribPointer(locations.position, 2, exportGL.FLOAT, false, 0, 0);
+            exportGL.drawArrays(exportGL.TRIANGLE_STRIP, 0, 4);
+
+            // Trigger download
+            const link = document.createElement('a');
+            link.download = 'spectro-bloom.png';
+            link.href = exportCanvas.toDataURL('image/png');
+            link.click();
+        }
+        document.getElementById('exportBtn').addEventListener('click', exportAsPNG);
+
+
+        document.addEventListener('click', (e) => {
+            if (menuOpen && !menuPanel.contains(e.target) && !hamburger.contains(e.target)) {
+                menuOpen = false;
+                hamburger.classList.remove('active');
+                menuPanel.classList.remove('open');
+                hamburger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Initialize with random settings on load
+        randomizeAllSettings();
+
+        window.addEventListener('resize', resizeCanvas);
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
